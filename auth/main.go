@@ -1,34 +1,19 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/EdgeJay/go-authenticated-service/auth/middlewares"
-	"github.com/julienschmidt/httprouter"
+	"github.com/EdgeJay/go-authenticated-service/auth/net/routers"
+	"github.com/EdgeJay/go-authenticated-service/auth/net/routes"
 )
 
-func logger(w http.ResponseWriter, r *http.Request, params httprouter.Params, next middlewares.NextFunc) {
-	fmt.Println("Logging before")
-	next()
-	fmt.Println("Logging after")
-}
-
-// this middleware does not call next function
-func interrupt(w http.ResponseWriter, r *http.Request, params httprouter.Params, _ middlewares.NextFunc) {
-	fmt.Println("Interrupt execution of next function")
-}
-
-func index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	fmt.Println("Output content")
-	fmt.Fprint(w, "Hello")
-}
-
 func main() {
-	router := httprouter.New()
-	router.GET("/", middlewares.NewWrappedHandler(index, logger))
-	router.GET("/interrupt", middlewares.NewWrappedHandler(index, logger, interrupt))
+	router := routers.New()
+	router.GET("/", middlewares.NewWrappedHandler(routes.Index, middlewares.Logger))
+	router.GET("/interrupt", middlewares.NewWrappedHandler(routes.Index, middlewares.Logger, middlewares.Interrupt))
+	router.GET("/error", middlewares.NewWrappedHandler(routes.Index, middlewares.Logger, middlewares.DoPanic))
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
